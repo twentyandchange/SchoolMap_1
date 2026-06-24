@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>School Map</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        .mapboxgl-popup-content {
+            padding: 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .popup-content {
+            padding: 10px;
+            font-family: Arial, sans-serif;
+        }
+        .popup-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        .popup-content img {
+            width: 400px;
+            height: 600px;
+            object-fit: cover;
+            border-radius: 4px;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div id='map'></div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2tpbGJ1cm4xIiwiYSI6ImNtNWc1NHNiNDA0b2EybW9yYmI4Y3BraDEifQ.lY6x_-SYoY__Pq1ybqEAQQ';
+    
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [-79.44, 42.19],
+        zoom: 10
+    });
+
+    // Load GeoJSON data
+    map.on('load', function() {
+        map.addSource('schools', {
+            type: 'geojson',
+            data: 'data.geojson'
+        });
+
+        map.addLayer({
+            id: 'schools-layer',
+            type: 'circle',
+            source: 'schools',
+            paint: {
+                'circle-radius': 5,
+                'circle-color': 'rgba(0,85,255,1)',
+                'circle-stroke-color': 'rgba(35,35,35,1)',
+                'circle-stroke-width': 1,
+                'circle-opacity': 1
+            }
+        });
+
+        // Create popups on hover
+        const popup = new mapboxgl.Popup({
+            closeButton: false,
+            closeOnClick: false
+        });
+
+        map.on('mousemove', 'schools-layer', function(e) {
+            map.getCanvas().style.cursor = 'pointer';
+
+            const feature = e.features[0];
+            const schoolName = feature.properties['School Nam'] || 'School';
+            const imagePath = feature.properties['field_9'] || '';
+
+            const popupContent = `
+                <div class="popup-content">
+                    <h3>${schoolName}</h3>
+                    ${imagePath ? `<img src="${imagePath}" alt="${schoolName}">` : '<p>No image available</p>'}
+                </div>
+            `;
+
+            popup.setLngLat(e.lngLat)
+                .setHTML(popupContent)
+                .addTo(map);
+        });
+
+        map.on('mouseleave', 'schools-layer', function() {
+            map.getCanvas().style.cursor = '';
+            popup.remove();
+        });
+    });
+</script>
+</body>
+</html>
